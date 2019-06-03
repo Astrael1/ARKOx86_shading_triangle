@@ -7,7 +7,7 @@
 
 int main (int argc, char *argv[])
 {
-	if (argc < 2){
+	if (argc < 3){
 		printf("Arg missing.\n");
 		return 0;
 	}
@@ -73,10 +73,9 @@ int main (int argc, char *argv[])
 
 	fclose(plik);
 
-	*i = 0x1234;
-	printf("i = %#x\n", *i);
-	f((char *)i);
-	printf("i = %#x\n", *i);
+	f(argv[2]);
+	printf(argv[2]);
+	printf("\n");
 
 	
 	
