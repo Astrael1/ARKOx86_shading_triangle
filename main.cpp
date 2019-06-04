@@ -3,47 +3,80 @@
 #include <stdlib.h>
 #define WORD __int32_t
 
-// schemat koloru 0x XX RR GG BB
 
-int main (int argc, char *argv[])
+
+void change_first_bit(char * filename)
 {
-	if (argc < 3){
-		printf("Arg missing.\n");
-		return 0;
-	}
-	FILE *plik = fopen(argv[1], "r+");
-
-	
+	WORD *i = (WORD *)malloc(sizeof(WORD));
+	FILE * plik = fopen(filename, "r+");
 
 	if(plik == NULL)
 	{
-		printf("Nie mozna otworzyc pliku");
+		printf("Cannot open file %s\n", filename);
+		return;
+	}
+	fseek(plik, 0L, SEEK_END);
+	
+	int fileSize = ftell(plik);
+	rewind(plik);
+	char * fileBytes = (char *)malloc(sizeof(char) * fileSize + 1);
+	int count = fread(fileBytes, sizeof(char), fileSize, plik);
+	printf("change_first_pixel: read %d bytes\n", count);
+	f(fileBytes);
+	fclose(plik);
+	int wsk = 0;
+	while (wsk < fileSize)
+	{
+		printf("0x");
+		for (int j = 0; j < 4; j++)
+		{
+			printf("%02hhx", *(fileBytes + wsk));
+			wsk++;
+		}
+		printf(" ");
+	}
+	
+}
+
+void imageInfo(char * filename)
+{
+	FILE *plik = fopen(filename, "r");
+	if(plik == NULL)
+	{
+		printf("imageInfo: cannot open file %s\n", filename);
+		return;
 	}
 
-	
 	printf ("Pozycja = %0#10x\n", ftell(plik));
 	WORD *i = (WORD *)malloc(sizeof(WORD));
 	WORD *pixel = (WORD *)malloc(sizeof(WORD));
 	fseek(plik, 10, 0);
 	fread(i, sizeof(WORD), 1, plik );
 	printf("Offset pixeli %d\n", *i);
-
-	int pixelOffset = *i;
 	
-	fseek(plik, *i, 0);
-	fread(pixel, sizeof(WORD), 1, plik);
-	printf("1. pixel %0#10x\n", *pixel);
+	int pixelOffset = *i;
+
+	fseek(plik, 18, 0);
+	fread(i, sizeof(WORD), 1, plik );
+	printf("Szerokosc obrazu %d\n", *i);
+
+	//int imageWidth = *i;
+
+	fread(i, sizeof(WORD), 1, plik );
+	printf("Wysokosc obrazu %d\n", *i);
+
+	//int imageHeight = *i;
 
 	fseek(plik, 0L, SEEK_END);
 	int fSize = ftell(plik);
 	printf("Romiar pliku: %d\n", fSize);
-	
-	fseek(plik, *i, 0);
-	*pixel = 0x00000000;
-	int diagnoza = fwrite(pixel, sizeof(WORD), 1, plik);
-	printf("Zapisano %d bajtów\n", diagnoza);
 
-	fseek(plik, *i, 0);
+	char * buffer = (char *)malloc(fSize+1);
+	rewind(plik);
+	fread(buffer, sizeof(char), fSize, plik);
+	
+
+	fseek(plik, pixelOffset, 0);
 	fread(pixel, sizeof(WORD), 1, plik);
 	printf("1. pixel %0#10x\n", *pixel);
 
@@ -51,12 +84,25 @@ int main (int argc, char *argv[])
 	int pixelCount = pixelBytes/4;
 	printf("Liczba pixeli: %d\n", pixelCount);
 
-	
+	fclose(plik);
+
+}
+
+
+void displayImageBytes(char * filename)
+{
+	FILE * plik = fopen(filename, "r");
+	if(plik == NULL)
+	{
+		printf("displayImageBytes: Cannot open file %s\n", filename);
+		return;
+	}
+
 	rewind(plik);
-	fseek(plik, *i, 0);
 	char c = 0;
 	int tmp = 1;
-	while (tmp == 1)
+	
+	while (tmp == 1 )
 	{
 		printf("0x ");
 		for(int i = 0; i < 4; i++)
@@ -67,15 +113,30 @@ int main (int argc, char *argv[])
 			printf("%02hhx ", c);
 			
 		}
-		printf("\n");
+		printf(" ");
 		c = 0;
 	}
+	puts("\n");
 
 	fclose(plik);
+}
 
-	f(argv[2]);
-	printf(argv[2]);
-	printf("\n");
+// schemat koloru 0x XX RR GG BB
+
+int main (int argc, char *argv[])
+{
+	if (argc < 2){
+		printf("Arg missing.\n");
+		return 0;
+	}
+	
+	
+	/*imageInfo(argv[1]);
+	displayImageBytes(argv[1]);*/
+	change_first_bit(argv[1]);
+	
+
+	
 
 	
 	

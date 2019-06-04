@@ -13,13 +13,15 @@ mov rsi, rdi	; save copy of string begin pointer
 ;------------------------------------------------------------------------------
 			; look for the string end (null character == '\0' == 0)
 			;	 (NOT zero character == '0')
+	mov rax, 0x0
+	mov eax, [rdi+10]	; load pixel offset
+	mov rbx, rdi
+	add rax, rbx
 	
-	mov dl, [rdi]	; load byte
-	cmp dl, 0	; cmp will set ZERO flag if dl is zero
-	jz end		; jump to end because the string is 
-			;	empty (first byte is zero!)
-	mov byte dl, 0x41
-	mov [rdi], dl
+	;mov [rdi], al
+
+	mov dword [rax], 0x12345678 ; load 0x00ffffff byte and watch it crash
+	;mov [rdi], eax
 
 end:
 
