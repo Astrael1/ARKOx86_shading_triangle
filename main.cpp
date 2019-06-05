@@ -7,7 +7,7 @@
 
 void change_first_bit(char * filename)
 {
-	WORD *i = (WORD *)malloc(sizeof(WORD));
+	WORD *i = (WORD *)malloc(sizeof(WORD) * 2);
 	FILE * plik = fopen(filename, "r+");
 
 	if(plik == NULL)
@@ -22,18 +22,26 @@ void change_first_bit(char * filename)
 	char * fileBytes = (char *)malloc(sizeof(char) * fileSize + 1);
 	int count = fread(fileBytes, sizeof(char), fileSize, plik);
 	printf("change_first_pixel: read %d bytes\n", count);
-	f(fileBytes);
+	
+	*i = 0x000000ff;
+	i[1] = 0x0000ff00;
+	f(fileBytes, i);
+	printf("Wartosc pod i: %d\n", *i);
 	
 	int wsk = 0;
-	while (wsk < fileSize)
+	while (wsk < 150)
 	{
-		printf("0x");
-		for (int j = 0; j < 4; j++)
+		for (int x = 0 ; x < 5 ; x ++)
 		{
-			printf("%02hhx", *(fileBytes + wsk));
-			wsk++;
+			printf("0x");
+			for (int j = 0; j < 4; j++)
+			{
+				printf("%02hhx", *(fileBytes + wsk));
+				wsk++;
+			}
+			printf(" ");
 		}
-		printf(" ");
+		printf("\n");
 	}
 	rewind(plik);
 	fwrite(fileBytes, sizeof(char), fileSize, plik);
@@ -103,8 +111,9 @@ void displayImageBytes(char * filename)
 	rewind(plik);
 	char c = 0;
 	int tmp = 1;
+	int n = 36;
 	
-	while (tmp == 1 )
+	while (tmp == 1 && n--)
 	{
 		printf("0x ");
 		for(int i = 0; i < 4; i++)
@@ -133,8 +142,8 @@ int main (int argc, char *argv[])
 	}
 	
 	
-	/*imageInfo(argv[1]);
-	displayImageBytes(argv[1]);*/
+	imageInfo(argv[1]);
+	displayImageBytes(argv[1]);
 	change_first_bit(argv[1]);
 	
 
