@@ -23,7 +23,7 @@ void change_first_bit(char * filename)
 	int count = fread(fileBytes, sizeof(char), fileSize, plik);
 	printf("change_first_pixel: read %d bytes\n", count);
 	f(fileBytes);
-	fclose(plik);
+	
 	int wsk = 0;
 	while (wsk < fileSize)
 	{
@@ -35,7 +35,9 @@ void change_first_bit(char * filename)
 		}
 		printf(" ");
 	}
-	
+	rewind(plik);
+	fwrite(fileBytes, sizeof(char), fileSize, plik);
+	fclose(plik);
 }
 
 void imageInfo(char * filename)
