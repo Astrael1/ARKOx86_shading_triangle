@@ -6,7 +6,7 @@
 
 
 
-void change_bit(char * filename, WORD pozX, WORD pozY, WORD color)
+void process(char * filename, WORD pozX, WORD pozY, WORD color)
 {
 	WORD *i = (WORD *)malloc(sizeof(WORD) * 10);
 	FILE * plik = fopen(filename, "r+");
@@ -154,17 +154,11 @@ int main (int argc, char *argv[])
 	else if (strcmp(argv[1], "-p") == 0)
 	{
 		printf("Process requested\n");
-		change_bit(argv[2], 1, 1, 0x0000ff00);
+		process(argv[2], 2, 1, 0x00ff0000);
 	}
 	/*imageInfo(argv[1]);
 	displayImageBytes(argv[1]);
 	change_first_bit(argv[1]);*/
-	
-
-	
-
-	
-	
 
 	// visual part
 	/*sf::RenderWindow window(sf::VideoMode(1200,400), "SFML Works");
