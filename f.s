@@ -7,11 +7,12 @@ mov rbp, rsp	; set new frame pointer
 			;	- "this procedure" frame pointer
 
 mov rax, rsi
-mov dword rcx, [rax+4]
+mov dword rcx, [rax + 4]
 
 ;mov rcx, 0x0000000000ffffff
 push rcx
-call change_pixel
+;call change_pixel
+call test_second_param
 
 end:
 	mov rsp, rbp	; restore original stack pointer
@@ -26,15 +27,51 @@ change_pixel:
 	push rbp	; push "calling procedure" frame pointer
 	mov rbp, rsp	; set new frame pointer
 
-	mov rcx, [rbp + 16]
-	mov rax, 0x0
-	mov eax, [rdi+10]	; load pixel offset
-	mov rbx, rdi
-	add rax, rbx	; now rax points at first pixel
+	mov rax, [rbp + 16]	; get color from stack
+	mov rbx, 0x0
+	mov ebx, [rdi+10]	; load pixel offset
+	add rbx, rdi	; now rax points at first pixel
 		
 	; 0x XXrrggbb
-	mov dword [rax], ecx
-	mov dword [rax + 16], ecx
+	mov word ecx, 0x0100
+	mul ecx
+	mov dword [rbx], 0x0000ff00	; change first pixel
+
+	;mov dword [rax + 16], ecx	;change fifth pixel
+
+	;epilogue
+	mov rsp, rbp	; restore original stack pointer
+	pop rbp		; restore "calling procedure" frame pointer
+	ret
+
+test_second_param:
+	;prologue
+	push rbp	; push "calling procedure" frame pointer
+	mov rbp, rsp	; set new frame pointer
+
+	mov rbx, 0
+	mov ebx, [rdi + 10] ; load pixell offset into ebx
+	add rbx, rdi ; add image pointer, rbx points at first pixel of image
+
+	;mov dword rax, [rdi + 18]	; load image width
+	;mov dword rdx, [rsi + 4]; load Y coordinate
+	
+	;mul rdx ; multiply width by Y
+	;mov dword rdx, [rsi] ; load X coordinate
+	;add rax, rdx ; add X coordinate
+
+	mov dword rax, [rsi] ; load X coordinate
+	mov rdx, 0x4
+	mul rdx ; multiply by 4
+	
+	add rbx, rax
+	mov dword edx, [rsi + 8] ; load color
+
+	mov dword [rbx], edx ; change pixel
+
+
+
+	;mov rcx, 0x0000000000ffffff
 
 	;epilogue
 	mov rsp, rbp	; restore original stack pointer

@@ -1,13 +1,14 @@
 #include "f.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #define WORD __int32_t
 
 
 
-void change_first_bit(char * filename)
+void change_bit(char * filename, WORD pozX, WORD pozY, WORD color)
 {
-	WORD *i = (WORD *)malloc(sizeof(WORD) * 2);
+	WORD *i = (WORD *)malloc(sizeof(WORD) * 10);
 	FILE * plik = fopen(filename, "r+");
 
 	if(plik == NULL)
@@ -23,8 +24,9 @@ void change_first_bit(char * filename)
 	int count = fread(fileBytes, sizeof(char), fileSize, plik);
 	printf("change_first_pixel: read %d bytes\n", count);
 	
-	*i = 0x000000ff;
-	i[1] = 0x0000ff00;
+	i[0] = pozX;
+	i[1] = pozY;
+	i[2] = color;
 	f(fileBytes, i);
 	printf("Wartosc pod i: %d\n", *i);
 	
@@ -136,15 +138,27 @@ void displayImageBytes(char * filename)
 
 int main (int argc, char *argv[])
 {
-	if (argc < 2){
+	if (argc < 3){
 		printf("Arg missing.\n");
 		return 0;
 	}
 	
-	
-	imageInfo(argv[1]);
+	if(strcmp(argv[1], "-i") == 0)
+	{
+		imageInfo(argv[2]);
+	}
+	else if (strcmp(argv[1], "-d") == 0)
+	{
+		printf("Byte display requested\n");
+	}
+	else if (strcmp(argv[1], "-p") == 0)
+	{
+		printf("Process requested\n");
+		change_bit(argv[2], 1, 0, 0x00ff0000);
+	}
+	/*imageInfo(argv[1]);
 	displayImageBytes(argv[1]);
-	change_first_bit(argv[1]);
+	change_first_bit(argv[1]);*/
 	
 
 	
