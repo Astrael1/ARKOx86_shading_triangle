@@ -154,7 +154,7 @@ int main (int argc, char *argv[])
 	else if (strcmp(argv[1], "-p") == 0)
 	{
 		printf("Process requested\n");
-		change_bit(argv[2], 1, 0, 0x00ff0000);
+		change_bit(argv[2], 1, 1, 0x0000ff00);
 	}
 	/*imageInfo(argv[1]);
 	displayImageBytes(argv[1]);

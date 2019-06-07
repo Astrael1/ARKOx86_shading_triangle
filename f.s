@@ -53,21 +53,26 @@ test_second_param:
 	mov ebx, [rdi + 10] ; load pixell offset into ebx
 	add rbx, rdi ; add image pointer, rbx points at first pixel of image
 
-	;mov dword rax, [rdi + 18]	; load image width
-	;mov dword rdx, [rsi + 4]; load Y coordinate
+	mov rax ,0
+	mov dword eax, [rdi + 18]	; load image width
+	mov dword edx, [rsi + 4]; load Y coordinate
 	
-	;mul rdx ; multiply width by Y
-	;mov dword rdx, [rsi] ; load X coordinate
-	;add rax, rdx ; add X coordinate
+	mul rdx ; multiply width by Y
+	mov rdx, 0x4
+	mul rdx	; multiply by 4
 
-	mov dword rax, [rsi] ; load X coordinate
+	add rbx, rax
+
+	mov rax, 0
+	mov dword eax, [rsi] ; load X coordinate
 	mov rdx, 0x4
 	mul rdx ; multiply by 4
 	
 	add rbx, rax
-	mov dword edx, [rsi + 8] ; load color
+	mov dword edx, [rsi + 8]
 
 	mov dword [rbx], edx ; change pixel
+	;mov qword [rbx+8], rbx ; change pixel
 
 
 
