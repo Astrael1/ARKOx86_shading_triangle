@@ -6,7 +6,9 @@
 
 
 
-void process(char * filename, WORD pozX, WORD pozY, WORD color)
+void process(char * filename, 
+WORD pozX, WORD pozY, WORD color, 
+WORD pozX2, WORD pozY2, WORD color2 )
 {
 	WORD *i = (WORD *)malloc(sizeof(WORD) * 10);
 	FILE * plik = fopen(filename, "r+");
@@ -27,6 +29,10 @@ void process(char * filename, WORD pozX, WORD pozY, WORD color)
 	i[0] = pozX;
 	i[1] = pozY;
 	i[2] = color;
+	i[3] = pozX2;
+	i[4] = pozY2;
+	i[5] = color2;
+
 	f(fileBytes, i);
 	printf("Wartosc pod i: %d\n", *i);
 	
@@ -154,7 +160,7 @@ int main (int argc, char *argv[])
 	else if (strcmp(argv[1], "-p") == 0)
 	{
 		printf("Process requested\n");
-		process(argv[2], 2, 1, 0x00000000);
+		process(argv[2], 10, 10, 0x0000ff00, 20, 9, 0x000000ff);
 	}
 	/*imageInfo(argv[1]);
 	displayImageBytes(argv[1]);
