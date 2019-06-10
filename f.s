@@ -21,13 +21,77 @@ mov dword ecx, 0x00000000
 push rcx
 call clear_image_with_color
 
+mov rax, 0
 mov rax, 1
 push rax
+
+mov rax, [rsi + 8]
+push rax
+mov rax, [rsi + 4]
+push rax
+mov rax, [rsi]
+push rax
+
+mov rax, [rsi + 32]
+push rax
+mov rax, [rsi + 28]
+push rax
+mov rax, [rsi + 24]
+push rax
+
 mov rax, [rsi + 20]
 push rax
 mov rax, [rsi + 16]
 push rax
 mov rax, [rsi + 12]
+push rax
+
+call draw_line
+
+mov rax, 0
+mov rax, 1
+push rax
+
+mov rax, [rsi + 32]
+push rax
+mov rax, [rsi + 28]
+push rax
+mov rax, [rsi + 24]
+push rax
+
+mov rax, [rsi + 8]
+push rax
+mov rax, [rsi + 4]
+push rax
+mov rax, [rsi]
+push rax
+
+
+mov rax, [rsi + 20]
+push rax
+mov rax, [rsi + 16]
+push rax
+mov rax, [rsi + 12]
+push rax
+
+call draw_line
+
+mov rax, 0
+mov rax, 1
+push rax
+
+mov rax, [rsi + 20]
+push rax
+mov rax, [rsi + 16]
+push rax
+mov rax, [rsi + 12]
+push rax
+
+mov rax, [rsi + 32]
+push rax
+mov rax, [rsi + 28]
+push rax
+mov rax, [rsi + 24]
 push rax
 
 mov rax, [rsi + 8]
@@ -51,7 +115,7 @@ draw_line:
 	mov rbp, rsp	; set new frame pointer
 	
 	mov rax, 0x00000000
-	sub rsp, 64
+	sub rsp, 72
 	;rbp - 8	; first local - X
 	;rbp - 16	; second local - Y
 	;rbp - 24	; dX
@@ -60,6 +124,7 @@ draw_line:
 	;rbp - 48	; kY
 	;rbp - 56	; e
 	;rbp - 64	; local color
+	;rbp - 72	; loop counter
 	push rax
 	push rbx
 	push rcx
@@ -81,6 +146,11 @@ draw_line:
 	; [rbp+40] - X 2
 	; [rbp+48] - Y 2
 	; [rbp+56] - color2
+	; third
+	; [rbp+64] - X 2
+	; [rbp+72] - Y 2
+	; [rbp+80] - color2
+	; [rbp+88] - BRESENHAM BOOL
 
 
 	;mov rcx, 0
@@ -131,11 +201,35 @@ negative_ky:
 positive_ky:
 
 	mov rax, [rbp - 24] ; read dX
-	mov rdx, 0x2
-	div dl	; divide by two
+	mov rbx, 0x2
+	mov rdx, 0
+	div bx	; divide by two
 	mov ah, 0	; remove the rest
 	mov [rbp - 56], rax	; save the 'e' value
 
+	mov rax, [rbp + 88]
+	cmp rax, 1
+	jne just_color_first_pixel
+
+	mov rax, 0
+	push rax
+	mov rax, [rbp + 80]
+	push rax
+	mov rax, [rbp + 72]
+	push rax
+	mov rax, [rbp + 64]
+	push rax
+
+	mov rax, [rbp - 64]
+	push rax
+	mov rax, [rbp - 16]
+	push rax
+	mov rax, [rbp - 8]
+	push rax
+	call draw_line
+
+
+just_color_first_pixel:
 	mov rax, [rbp + 32]
 	push rax
 	mov rax, [rbp - 16]
@@ -144,6 +238,7 @@ positive_ky:
 	push rax
 	call change_pixel_XY	; color pixel (param1, param2) with color 'param3'
 
+calculate_dX_dY:
 	
 	mov eax, [rbp - 24]	; read dX
 	mov ebx, [rbp - 32]	; read dY
@@ -152,8 +247,9 @@ positive_ky:
 
 	; calculate 'e'
 	mov rax, [rbp - 24] ; read dX
-	mov rdx, 0x2
-	div dl	; divide by two
+	mov rbx, 0x2
+	mov rdx, 0
+	div bx	; divide by two
 	mov ah, 0	; remove the rest
 	mov [rbp - 56], rax	; save the 'e' value
 
@@ -161,10 +257,13 @@ positive_ky:
 	cmp rdx, 0
 	jz draw_line_end
 	mov rcx, 0
+	mov [rbp - 72], rcx	; save loop counter
 
 
 draw_line_loop:
-	inc rcx
+	mov rcx, [rbp - 72] ; read loop counter
+	inc rcx	; increment
+	mov [rbp - 72], rcx ; save loop counter
 	mov rax, [rbp - 8]	; read X
 	mov rbx, [rbp - 40]	; read kX
 	add rax, rbx	; add kX
@@ -202,7 +301,7 @@ skip_slow_dimension:
 	sub al, bl	; get the difference
 	mul cl	; multiply by nr of iteration
 	mov rbx, [rbp - 24]	; read dX
-	div bx ; divide eax by dX
+	div ebx ; divide eax by dX
 	mov byte bl, [rbp + 32] ; read color again
 	sub bl, al
 	mov byte [rbp - 64], bl	; save in local variable
@@ -213,7 +312,7 @@ first_lower_blue:
 	mov rax, rbx
 	mul cl
 	mov rbx, [rbp - 24]	; read dX
-	div bx ; divide eax by dX
+	div ebx ; divide eax by dX
 	mov byte bl, [rbp + 32] ; read color again
 	add bl, al
 	mov byte [rbp - 64], bl	; save in local variable
@@ -232,7 +331,7 @@ first_blue_ok:
 	sub al, bl	; get the difference
 	mul cl	; multiply by nr of iteration
 	mov rbx, [rbp - 24]	; read dX
-	div bx ; divide eax by dX
+	div ebx ; divide eax by dX
 	mov byte bl, [rbp + 33] ; read color again
 	sub bl, al
 	mov byte [rbp - 63], bl	; save in local variable
@@ -243,7 +342,7 @@ first_lower_green:
 	mov rax, rbx
 	mul cl
 	mov rbx, [rbp - 24]	; read dX
-	div bx ; divide eax by dX
+	div ebx ; divide eax by dX
 	mov byte bl, [rbp + 33] ; read color again
 	add bl, al
 	mov byte [rbp - 63], bl	; save in local variable
@@ -261,7 +360,7 @@ first_green_ok:
 	sub al, bl	; get the difference
 	mul cl	; multiply by nr of iteration
 	mov rbx, [rbp - 24]	; read dX
-	div bx ; divide eax by dX
+	div ebx ; divide eax by dX
 	mov byte bl, [rbp + 34] ; read color again
 	sub bl, al
 	mov byte [rbp - 62], bl	; save in local variable
@@ -272,23 +371,23 @@ first_lower_red:
 	mov rax, rbx
 	mul cl
 	mov rbx, [rbp - 24]	; read dX
-	div bx ; divide eax by dX
+	div ebx ; divide eax by dX
 	mov byte bl, [rbp + 34] ; read color again
 	add bl, al
 	mov byte [rbp - 62], bl	; save in local variable
 first_red_ok:
 
-	mov rax, [rbp + 64]
+	mov rax, [rbp + 88]
 	cmp rax, 1
 	jne just_color_pixel
-	
+do_bresenham:
 	mov rax, 0
 	push rax
-	mov rax, [rsi + 32]
+	mov rax, [rbp + 80]
 	push rax
-	mov rax, [rsi + 28]
+	mov rax, [rbp + 72]
 	push rax
-	mov rax, [rsi + 24]
+	mov rax, [rbp + 64]
 	push rax
 
 	mov rax, [rbp - 64]
@@ -298,6 +397,7 @@ first_red_ok:
 	mov rax, [rbp - 8]
 	push rax
 	call draw_line
+	jmp make_draw_line_loop
 
 
 just_color_pixel:
@@ -309,8 +409,9 @@ just_color_pixel:
 	push rax
 	call change_pixel_XY	; color pixel (param1, param2) with color 'param3'
 	
-	
+make_draw_line_loop:
 	mov rdx, [rbp - 24]	; read dX
+	mov rcx, [rbp - 72] ; read loop counter
 	cmp rcx, rdx	; if loop counter is equal to dX then end
 	jl draw_line_loop
 
@@ -329,8 +430,11 @@ draw_line_inverted:
 	cmp rdx, 0
 	jz draw_line_end
 	mov rcx, 0
+	mov [rbp - 72], rcx	; save loop counter
 draw_line_inverted_loop:
-	inc rcx
+	mov rcx, [rbp - 72] ; read loop counter
+	inc rcx	; increment
+	mov [rbp - 72], rcx ; save loop counter
 
 	mov rax, [rbp - 16]	; read Y
 	mov rbx, [rbp - 48]	; read kY
@@ -372,7 +476,7 @@ skip_slow_dimension_inverted:
 	sub al, bl	; get the difference
 	mul cl	; multiply by nr of iteration
 	mov rbx, [rbp - 32]	; read dY
-	div bx ; divide eax by dY
+	div ebx ; divide eax by dY
 	mov byte bl, [rbp + 32] ; read color again
 	sub bl, al
 	mov byte [rbp - 64], bl	; save in local variable
@@ -383,7 +487,7 @@ second_lower_blue:
 	mov rax, rbx
 	mul cl
 	mov rbx, [rbp - 32]	; read dY
-	div bx ; divide eax by dY
+	div ebx ; divide eax by dY
 	mov byte bl, [rbp + 32] ; read color again
 	add bl, al
 	mov byte [rbp - 64], bl	; save in local variable
@@ -402,7 +506,7 @@ second_blue_ok:
 	sub al, bl	; get the difference
 	mul cl	; multiply by nr of iteration
 	mov rbx, [rbp - 32]	; read dY
-	div bx ; divide eax by dX
+	div ebx ; divide eax by dX
 	mov byte bl, [rbp + 33] ; read color again
 	sub bl, al
 	mov byte [rbp - 63], bl	; save in local variable
@@ -413,7 +517,7 @@ second_lower_green:
 	mov rax, rbx
 	mul cl
 	mov rbx, [rbp - 32]	; read dY
-	div bx ; divide eax by dX
+	div ebx ; divide eax by dX
 	mov byte bl, [rbp + 33] ; read color again
 	add bl, al
 	mov byte [rbp - 63], bl	; save in local variable
@@ -431,7 +535,7 @@ second_green_ok:
 	sub al, bl	; get the difference
 	mul cl	; multiply by nr of iteration
 	mov rbx, [rbp - 32]	; read dY
-	div bx ; divide eax by dX
+	div ebx ; divide eax by dX
 	mov byte bl, [rbp + 34] ; read color again
 	sub bl, al
 	mov byte [rbp - 62], bl	; save in local variable
@@ -442,12 +546,36 @@ second_lower_red:
 	mov rax, rbx
 	mul cl
 	mov rbx, [rbp - 32]	; read dY
-	div bx ; divide eax by dX
+	div ebx ; divide eax by dX
 	mov byte bl, [rbp + 34] ; read color again
 	add bl, al
 	mov byte [rbp - 62], bl	; save in local variable
 second_red_ok:
 
+	mov rax, [rbp + 88]
+	cmp rax, 1
+	jne just_color_inverted_pixel
+do_bresenham_inverted:
+
+	mov rax, 0
+	push rax
+	mov rax, [rbp + 80]
+	push rax
+	mov rax, [rbp + 72]
+	push rax
+	mov rax, [rbp + 64]
+	push rax
+
+	mov rax, [rbp - 64]
+	push rax
+	mov rax, [rbp - 16]
+	push rax
+	mov rax, [rbp - 8]
+	push rax
+	call draw_line
+	jmp make_draw_line_inverted_loop
+
+just_color_inverted_pixel
 	mov rax, [rbp - 64]
 	push rax
 	mov rax, [rbp - 16]
@@ -456,8 +584,9 @@ second_red_ok:
 	push rax
 	call change_pixel_XY	; color pixel (param1, param2) with color 'param3'
 
-	
+make_draw_line_inverted_loop:	
 	mov rdx, [rbp - 32]	; read dY
+	mov rcx, [rbp - 72] ; read loop counter
 	cmp rcx, rdx	; if loop counter is greater/equal to dX then end
 	jl draw_line_inverted_loop
 

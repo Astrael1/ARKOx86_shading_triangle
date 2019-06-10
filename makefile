@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -m64
+CFLAGS = -Wall -m64 -g
 SFMLPTH = /usr/include/SFML
 all:	f.o main.o 
 	$(CC) $(CFLAGS) f.o main.o -o fun -lstdc++;

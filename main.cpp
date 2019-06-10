@@ -150,7 +150,7 @@ int main (int argc, char *argv[])
 {
 	if (argc < 3){
 		printf("Arg missing.\n");
-		return 0;
+		return 1;
 	}
 	
 	if(strcmp(argv[1], "-i") == 0)
@@ -163,10 +163,17 @@ int main (int argc, char *argv[])
 	}
 	else if (strcmp(argv[1], "-p") == 0)
 	{
+		if (argc < 9)
+		{
+			printf("Arg missing.\n");
+			return 1;
+		}
 		printf("Process requested\n");
-		WORD c1 = 0x00ffffff, c2 = 0x00000000;
+		WORD c1 = 0x00ff0000, c2 = 0x0000ff00;
 		WORD pozL = 15, pozH = 35;
-		process(argv[2], 1, 1, c1, pozH, pozL, c2, 100, 50, c2);
+		process(argv[2], atoi(argv[3]), atoi(argv[4]), 
+		c1, atoi(argv[5]), atoi(argv[6]), 
+		c2, atoi(argv[7]), atoi(argv[8]), 0x000000ff);
 	}
 	/*imageInfo(argv[1]);
 	displayImageBytes(argv[1]);
