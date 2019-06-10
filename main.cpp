@@ -166,7 +166,7 @@ int main (int argc, char *argv[])
 		printf("Process requested\n");
 		WORD c1 = 0x00ffffff, c2 = 0x00000000;
 		WORD pozL = 15, pozH = 35;
-		process(argv[2], 50, 100, c1, pozH, pozL, c2, 100, 50, c2);
+		process(argv[2], 1, 1, c1, pozH, pozL, c2, 100, 50, c2);
 	}
 	/*imageInfo(argv[1]);
 	displayImageBytes(argv[1]);

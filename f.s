@@ -21,67 +21,25 @@ mov dword ecx, 0x00000000
 push rcx
 call clear_image_with_color
 
-;mov rax, [rsi + 20]
-;push rax
-;mov rax, [rsi + 16]
-;push rax
-;mov rax, [rsi + 12]
-;push rax
+mov rax, 1
+push rax
+mov rax, [rsi + 20]
+push rax
+mov rax, [rsi + 16]
+push rax
+mov rax, [rsi + 12]
+push rax
 
-;mov rax, [rsi + 8]
-;push rax
-;mov rax, [rsi + 4]
-;push rax
-;mov rax, [rsi]
-;push rax
+mov rax, [rsi + 8]
+push rax
+mov rax, [rsi + 4]
+push rax
+mov rax, [rsi]
+push rax
 
-;call draw_line
-
-call bresenham
+call draw_line
 
 end:
-	mov rsp, rbp	; restore original stack pointer
-	pop rbp		; restore "calling procedure" frame pointer
-	ret
-
-bresenham:
-	;prologue
-	push rbp	; push "calling procedure" frame pointer
-	mov rbp, rsp	; set new frame pointer
-
-	mov rax, [rsi + 32]
-	push rax
-	mov rax, [rsi + 28]
-	push rax
-	mov rax, [rsi + 24]
-	push rax
-
-	mov rax, [rsi + 8]
-	push rax
-	mov rax, [rsi + 4]
-	push rax
-	mov rax, [rsi]
-	push rax
-
-	call draw_line
-
-	mov rax, [rsi + 20]
-	push rax
-	mov rax, [rsi + 16]
-	push rax
-	mov rax, [rsi + 12]
-	push rax
-
-	mov rax, [rsi + 8]
-	push rax
-	mov rax, [rsi + 4]
-	push rax
-	mov rax, [rsi]
-	push rax
-
-	call draw_line
-
-	; epilogue
 	mov rsp, rbp	; restore original stack pointer
 	pop rbp		; restore "calling procedure" frame pointer
 	ret
@@ -320,6 +278,29 @@ first_lower_red:
 	mov byte [rbp - 62], bl	; save in local variable
 first_red_ok:
 
+	mov rax, [rbp + 64]
+	cmp rax, 1
+	jne just_color_pixel
+	
+	mov rax, 0
+	push rax
+	mov rax, [rsi + 32]
+	push rax
+	mov rax, [rsi + 28]
+	push rax
+	mov rax, [rsi + 24]
+	push rax
+
+	mov rax, [rbp - 64]
+	push rax
+	mov rax, [rbp - 16]
+	push rax
+	mov rax, [rbp - 8]
+	push rax
+	call draw_line
+
+
+just_color_pixel:
 	mov rax, [rbp - 64]
 	push rax
 	mov rax, [rbp - 16]
@@ -327,6 +308,8 @@ first_red_ok:
 	mov rax, [rbp - 8]
 	push rax
 	call change_pixel_XY	; color pixel (param1, param2) with color 'param3'
+	
+	
 	mov rdx, [rbp - 24]	; read dX
 	cmp rcx, rdx	; if loop counter is equal to dX then end
 	jl draw_line_loop
