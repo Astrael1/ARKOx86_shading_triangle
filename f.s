@@ -8,11 +8,11 @@ mov rbp, rsp	; set new frame pointer
 
 ;change pixel of given coordinates to given color
 ;mov rcx, 0
-;mov dword ecx, [rsi+8]
+;mov dword ecx, <color>
 ;push rcx
-;mov dword ecx, [rsi+4]
+;mov dword ecx, <Y>
 ;push rcx
-;mov dword ecx, [rsi]
+;mov dword ecx, <X>
 ;push rcx
 ;call change_pixel_XY
 
@@ -21,26 +21,71 @@ mov dword ecx, 0x00000000
 push rcx
 call clear_image_with_color
 
-mov rax, [rsi + 20]
-push rax
-mov rax, [rsi + 16]
-push rax
-mov rax, [rsi + 12]
-push rax
+;mov rax, [rsi + 20]
+;push rax
+;mov rax, [rsi + 16]
+;push rax
+;mov rax, [rsi + 12]
+;push rax
 
-mov rax, [rsi + 8]
-push rax
-mov rax, [rsi + 4]
-push rax
-mov rax, [rsi]
-push rax
+;mov rax, [rsi + 8]
+;push rax
+;mov rax, [rsi + 4]
+;push rax
+;mov rax, [rsi]
+;push rax
 
-call draw_line
+;call draw_line
+
+call bresenham
 
 end:
 	mov rsp, rbp	; restore original stack pointer
 	pop rbp		; restore "calling procedure" frame pointer
 	ret
+
+bresenham:
+	;prologue
+	push rbp	; push "calling procedure" frame pointer
+	mov rbp, rsp	; set new frame pointer
+
+	mov rax, [rsi + 32]
+	push rax
+	mov rax, [rsi + 28]
+	push rax
+	mov rax, [rsi + 24]
+	push rax
+
+	mov rax, [rsi + 8]
+	push rax
+	mov rax, [rsi + 4]
+	push rax
+	mov rax, [rsi]
+	push rax
+
+	call draw_line
+
+	mov rax, [rsi + 20]
+	push rax
+	mov rax, [rsi + 16]
+	push rax
+	mov rax, [rsi + 12]
+	push rax
+
+	mov rax, [rsi + 8]
+	push rax
+	mov rax, [rsi + 4]
+	push rax
+	mov rax, [rsi]
+	push rax
+
+	call draw_line
+
+	; epilogue
+	mov rsp, rbp	; restore original stack pointer
+	pop rbp		; restore "calling procedure" frame pointer
+	ret
+
 
 draw_line:
 	;prologue
@@ -48,18 +93,26 @@ draw_line:
 	mov rbp, rsp	; set new frame pointer
 	
 	mov rax, 0x00000000
-	push rax	; first local - X
-	push rax	; second local - Y
-	push rax	; dX
-	push rax	; dY
-	push rax	; kX
-	push rax	; kY
-	push rax	; e
+	sub rsp, 64
+	;rbp - 8	; first local - X
+	;rbp - 16	; second local - Y
+	;rbp - 24	; dX
+	;rbp - 32	; dY
+	;rbp - 40	; kX
+	;rbp - 48	; kY
+	;rbp - 56	; e
+	;rbp - 64	; local color
+	push rax
+	push rbx
+	push rcx
+	push rdx
 
 	mov rax, [rbp + 16]
 	mov [rbp - 8], rax	; save X
 	mov rax, [rbp + 24]
 	mov [rbp - 16], rax	; save Y
+	mov rax, [rbp + 32]
+	mov [rbp - 64], rax
 
 	; call parameters
 	; first end
@@ -178,7 +231,96 @@ draw_line_loop:
 	mov [rbp - 56], rax ; save e
 
 skip_slow_dimension:
-	mov rax, [rbp + 32]
+
+	;calculate color
+	mov byte al, [rbp + 32]	; take blue from 1st param
+	mov byte bl, [rbp + 56]	; take blue from 2nd param
+	mov rdx, 0	; clear rdx, div uses it even when dividing by a dword, because reasons
+	
+	cmp rax, rbx
+	je first_blue_ok
+	jl first_lower_blue
+
+	sub al, bl	; get the difference
+	mul cl	; multiply by nr of iteration
+	mov rbx, [rbp - 24]	; read dX
+	div bx ; divide eax by dX
+	mov byte bl, [rbp + 32] ; read color again
+	sub bl, al
+	mov byte [rbp - 64], bl	; save in local variable
+	jmp first_blue_ok
+	
+first_lower_blue:
+	sub bl, al
+	mov rax, rbx
+	mul cl
+	mov rbx, [rbp - 24]	; read dX
+	div bx ; divide eax by dX
+	mov byte bl, [rbp + 32] ; read color again
+	add bl, al
+	mov byte [rbp - 64], bl	; save in local variable
+
+first_blue_ok:
+
+	;calculate color green
+	mov byte al, [rbp + 33]	; take green from 1st param
+	mov byte bl, [rbp + 57]	; take green from 2nd param
+	mov rdx, 0	; clear rdx, div uses it even when dividing by a dword, because reasons
+
+	cmp rax, rbx
+	je first_green_ok
+	jl first_lower_green
+
+	sub al, bl	; get the difference
+	mul cl	; multiply by nr of iteration
+	mov rbx, [rbp - 24]	; read dX
+	div bx ; divide eax by dX
+	mov byte bl, [rbp + 33] ; read color again
+	sub bl, al
+	mov byte [rbp - 63], bl	; save in local variable
+	jmp first_green_ok
+	
+first_lower_green:
+	sub bl, al
+	mov rax, rbx
+	mul cl
+	mov rbx, [rbp - 24]	; read dX
+	div bx ; divide eax by dX
+	mov byte bl, [rbp + 33] ; read color again
+	add bl, al
+	mov byte [rbp - 63], bl	; save in local variable
+first_green_ok:
+
+	;calculate color red
+	mov byte al, [rbp + 34]	; take red from 1st param
+	mov byte bl, [rbp + 58]	; take green from 2nd param
+	mov rdx, 0	; clear rdx, div uses it even when dividing by a dword, because reasons
+
+	cmp rax, rbx
+	je first_red_ok
+	jl first_lower_red
+
+	sub al, bl	; get the difference
+	mul cl	; multiply by nr of iteration
+	mov rbx, [rbp - 24]	; read dX
+	div bx ; divide eax by dX
+	mov byte bl, [rbp + 34] ; read color again
+	sub bl, al
+	mov byte [rbp - 62], bl	; save in local variable
+	jmp first_red_ok
+	
+first_lower_red:
+	sub bl, al
+	mov rax, rbx
+	mul cl
+	mov rbx, [rbp - 24]	; read dX
+	div bx ; divide eax by dX
+	mov byte bl, [rbp + 34] ; read color again
+	add bl, al
+	mov byte [rbp - 62], bl	; save in local variable
+first_red_ok:
+
+	mov rax, [rbp - 64]
 	push rax
 	mov rax, [rbp - 16]
 	push rax
@@ -190,7 +332,6 @@ skip_slow_dimension:
 	jl draw_line_loop
 
 	jmp draw_line_end
-
 
 draw_line_inverted:
 
@@ -207,14 +348,6 @@ draw_line_inverted:
 	mov rcx, 0
 draw_line_inverted_loop:
 	inc rcx
-
-	;mov rax, 0
-	;push rax
-	;mov rax, 0
-	;push rax
-	;mov rax, [rbp - 16]
-	;push rax
-	;call change_pixel_XY	; color pixel (param1, param2) with color 'param
 
 	mov rax, [rbp - 16]	; read Y
 	mov rbx, [rbp - 48]	; read kY
@@ -239,25 +372,107 @@ draw_line_inverted_loop:
 	add rax, rbx	; e = e + dY
 	mov [rbp - 56], rax ; save e
 
-	;mov rax, 0x00ffffff
-	;push rax
-	;mov rax, 0
-	;push rax
-	;mov rax, [rbp - 8]
-	;push rax
-	;call change_pixel_XY	;DEBUG
-
 
 skip_slow_dimension_inverted:
 
+	;calculate color
 	mov rax, [rbp + 32]
+	and rax, 0x00000000000000ff
+	mov rbx, [rbp + 56]
+	and rbx, 0x00000000000000ff
+	mov rdx, 0	; clear rdx, div uses it even when dividing by a dword, because reasons
+	
+	cmp rax, rbx
+	je second_blue_ok
+	jl second_lower_blue
+
+	sub al, bl	; get the difference
+	mul cl	; multiply by nr of iteration
+	mov rbx, [rbp - 32]	; read dY
+	div bx ; divide eax by dY
+	mov byte bl, [rbp + 32] ; read color again
+	sub bl, al
+	mov byte [rbp - 64], bl	; save in local variable
+	jmp second_blue_ok
+	
+second_lower_blue:
+	sub bl, al
+	mov rax, rbx
+	mul cl
+	mov rbx, [rbp - 32]	; read dY
+	div bx ; divide eax by dY
+	mov byte bl, [rbp + 32] ; read color again
+	add bl, al
+	mov byte [rbp - 64], bl	; save in local variable
+
+second_blue_ok:
+
+	;calculate color green
+	mov byte al, [rbp + 33]	; take green from 1st param
+	mov byte bl, [rbp + 57]	; take green from 2nd param
+	mov rdx, 0	; clear rdx, div uses it even when dividing by a dword, because reasons
+
+	cmp rax, rbx
+	je second_green_ok
+	jl second_lower_green
+
+	sub al, bl	; get the difference
+	mul cl	; multiply by nr of iteration
+	mov rbx, [rbp - 32]	; read dY
+	div bx ; divide eax by dX
+	mov byte bl, [rbp + 33] ; read color again
+	sub bl, al
+	mov byte [rbp - 63], bl	; save in local variable
+	jmp second_green_ok
+	
+second_lower_green:
+	sub bl, al
+	mov rax, rbx
+	mul cl
+	mov rbx, [rbp - 32]	; read dY
+	div bx ; divide eax by dX
+	mov byte bl, [rbp + 33] ; read color again
+	add bl, al
+	mov byte [rbp - 63], bl	; save in local variable
+second_green_ok:
+
+	;calculate color red
+	mov byte al, [rbp + 34]	; take red from 1st param
+	mov byte bl, [rbp + 58]	; take green from 2nd param
+	mov rdx, 0	; clear rdx, div uses it even when dividing by a dword, because reasons
+
+	cmp rax, rbx
+	je second_red_ok
+	jl second_lower_red
+
+	sub al, bl	; get the difference
+	mul cl	; multiply by nr of iteration
+	mov rbx, [rbp - 32]	; read dY
+	div bx ; divide eax by dX
+	mov byte bl, [rbp + 34] ; read color again
+	sub bl, al
+	mov byte [rbp - 62], bl	; save in local variable
+	jmp second_red_ok
+	
+second_lower_red:
+	sub bl, al
+	mov rax, rbx
+	mul cl
+	mov rbx, [rbp - 32]	; read dY
+	div bx ; divide eax by dX
+	mov byte bl, [rbp + 34] ; read color again
+	add bl, al
+	mov byte [rbp - 62], bl	; save in local variable
+second_red_ok:
+
+	mov rax, [rbp - 64]
 	push rax
 	mov rax, [rbp - 16]
 	push rax
 	mov rax, [rbp - 8]
 	push rax
 	call change_pixel_XY	; color pixel (param1, param2) with color 'param3'
-	
+
 	
 	mov rdx, [rbp - 32]	; read dY
 	cmp rcx, rdx	; if loop counter is greater/equal to dX then end
@@ -265,6 +480,10 @@ skip_slow_dimension_inverted:
 
 draw_line_end:
 	;epilogue
+	pop rdx
+	pop rcx
+	pop rbx
+	pop rax
 	mov rsp, rbp	; restore original stack pointer
 	pop rbp		; restore "calling procedure" frame pointer
 	ret
